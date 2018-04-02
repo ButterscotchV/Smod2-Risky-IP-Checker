@@ -35,7 +35,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Smod2">
-      <HintPath>..\..\Smod2\Smod2\bin\Release\Smod2.dll</HintPath>
+      <HintPath>..\Smod2\Smod2\bin\Release\Smod2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />

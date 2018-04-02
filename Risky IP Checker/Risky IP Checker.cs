@@ -18,7 +18,7 @@ namespace RiskyIPCheckerPlugin
 		version = "1.0",
 		SmodMajor = 2,
 		SmodMinor = 0,
-		SmodRevision = 5
+		SmodRevision = 6
 		)]
 	class RiskyIPChecker : Plugin
 	{
