@@ -15,10 +15,10 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.0",
+		version = "1.1",
 		SmodMajor = 2,
 		SmodMinor = 0,
-		SmodRevision = 6
+		SmodRevision = 10
 		)]
 	class RiskyIPChecker : Plugin
 	{
