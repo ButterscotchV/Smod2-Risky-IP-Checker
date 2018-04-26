@@ -34,7 +34,7 @@ namespace Smod.Events
 					}
 				}
 
-				this.plugin.ipcheck.Check(player, nickname);
+				this.plugin.ipcheck.Check(player);
 			}
 			// end
 		}

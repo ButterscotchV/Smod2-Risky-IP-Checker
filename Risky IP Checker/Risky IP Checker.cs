@@ -87,13 +87,13 @@ namespace RiskyIPCheckerPlugin
 			// end
 		}
 
-		public void Check(Player conn, string name)
+		public void Check(Player conn)
 		{
-			this.StartCoroutine(this.CheckIPRisk(conn, name));
+			this.StartCoroutine(this.CheckIPRisk(conn));
 		}
 
 		// ServerMod - IP Risk Checker
-		IEnumerator CheckIPRisk(Player conn, string name)
+		IEnumerator CheckIPRisk(Player conn)
 		{
 			string email = this.plugin.GetConfigString("kick_risky_ips_email").Trim();
 			email = (email.Length > 0 ? "&contact=" + email : "");
@@ -139,7 +139,7 @@ namespace RiskyIPCheckerPlugin
 
 							if (this.smIPQueue.Count > 0 && this.RatelimitContains(playerAddress) && this.RatelimitEquals(playerAddress, this.smIPQueue[0]))
 							{
-								yield return this.StartCoroutine(this.FetchIPRisk(conn, name, playerAddress, email, conn.HardwareId));
+								yield return this.StartCoroutine(this.FetchIPRisk(conn, playerAddress, email));
 
 								int ratelimitTime = this.plugin.GetConfigInt("kick_risky_ips_ratelimit");
 								this.UpdateRatelimitTime(playerAddress, ratelimitTime + 15); // Set timeout with a bit of extra time
@@ -167,9 +167,9 @@ namespace RiskyIPCheckerPlugin
 					}
 					else
 					{
-						this.plugin.Debug("Player IP already checked Suspicion: " + percentSure + "% Nick: \"" + name + "\" IP: " + playerAddress + "\" HWID: " + conn.HardwareId);
+						this.plugin.Debug("Player IP already checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + playerAddress + "\" SteamID: " + conn.SteamId);
 
-						this.RiskyIPAction(conn, percentSure, name, playerAddress, conn.HardwareId);
+						this.RiskyIPAction(conn, percentSure, playerAddress);
 					}
 				}
 				else
@@ -237,9 +237,9 @@ namespace RiskyIPCheckerPlugin
 			}
 		}
 
-		IEnumerator FetchIPRisk(Player conn, string nick, string testAddress, string email, string hardware)
+		IEnumerator FetchIPRisk(Player conn, string testAddress, string email)
 		{
-			this.plugin.Debug("Checking player Nick: \"" + nick + "\" IP: " + testAddress + "\" HWID: " + hardware);
+			this.plugin.Debug("Checking player Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 
 			string webRequest = "http://" + this.plugin.GetConfigString("kick_risky_ips_subdomain") + ".getipintel.net/check.php?ip=" + testAddress + email + "&flags=f";
 			this.plugin.Debug("Contacting website with request: " + webRequest);
@@ -250,9 +250,9 @@ namespace RiskyIPCheckerPlugin
 				System.Decimal percentSure = System.Math.Round((System.Decimal)(likelyBad * 100f), 1, System.MidpointRounding.ToEven);
 				this.smIPTrust.Add(testAddress, percentSure);
 
-				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + nick + "\" IP: " + testAddress + "\" HWID: " + hardware);
+				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 
-				this.RiskyIPAction(conn, percentSure, nick, testAddress, hardware);
+				this.RiskyIPAction(conn, percentSure, testAddress);
 			}
 			else
 			{
@@ -284,16 +284,16 @@ namespace RiskyIPCheckerPlugin
 			}
 		}
 
-		public void RiskyIPAction(Player conn, System.Decimal percentSure, string nick, string testAddress, string hardware)
+		public void RiskyIPAction(Player conn, System.Decimal percentSure, string testAddress)
 		{
 			if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("ban_risky_ips_at_percent"))
 			{
-				this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + nick + "\" IP: " + testAddress + "\" HWID: " + hardware);
+				this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 				conn.Ban(26297460);
 			}
 			if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("kick_risky_ips_at_percent"))
 			{
-				this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + nick + "\" IP: " + testAddress + "\" HWID: " + hardware);
+				this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 				conn.Disconnect();
 			}
 		}
