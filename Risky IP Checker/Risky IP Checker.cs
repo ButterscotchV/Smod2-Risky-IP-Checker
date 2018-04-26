@@ -44,7 +44,7 @@ namespace RiskyIPCheckerPlugin
 		public override void Register()
 		{
 			// Register Events
-			this.AddEventHandler(typeof(IEventNicknameSet), new NicknameSetHandler(this), Priority.Normal);
+			this.AddEventHandler(typeof(IEventPlayerJoin), new PlayerJoinHandler(this), Priority.Normal);
 			this.AddEventHandler(typeof(IEventRoundStart), new RoundStartHandler(this), Priority.Normal);
 
 			// Register config settings

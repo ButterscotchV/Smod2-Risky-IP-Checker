@@ -4,19 +4,17 @@ using Smod2.Events;
 
 namespace Smod.Events
 {
-	class NicknameSetHandler : IEventNicknameSet
+	class PlayerJoinHandler : IEventPlayerJoin
 	{
 		private RiskyIPChecker plugin;
 
-		public NicknameSetHandler(RiskyIPChecker plugin)
+		public PlayerJoinHandler(RiskyIPChecker plugin)
 		{
 			this.plugin = plugin;
 		}
 
-		public void OnNicknameSet(Player player, string nickname, out string nicknameOutput)
+		public void OnPlayerJoin(Player player)
 		{
-			nicknameOutput = nickname;
-
 			// IP Risk Checker
 			if (plugin.GetConfigBool("kick_risky_ips"))
 			{
