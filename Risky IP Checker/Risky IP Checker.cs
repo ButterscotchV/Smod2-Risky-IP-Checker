@@ -15,10 +15,10 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.1",
+		version = "1.2",
 		SmodMajor = 2,
-		SmodMinor = 0,
-		SmodRevision = 10
+		SmodMinor = 1,
+		SmodRevision = 0
 		)]
 	class RiskyIPChecker : Plugin
 	{
@@ -48,14 +48,14 @@ namespace RiskyIPCheckerPlugin
 			this.AddEventHandler(typeof(IEventRoundStart), new RoundStartHandler(this), Priority.Normal);
 
 			// Register config settings
-			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips", "true", Smod2.Config.SettingType.BOOL, true, "Enables/Disables Risky IP Checker (Uses https://getipintel.net/)"));
-			this.AddConfig(new Smod2.Config.ConfigSetting("trusted_ips_reset_every", "10", Smod2.Config.SettingType.NUMERIC, true, "The number of rounds until the cached IPs are cleared"));
-			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_ratelimit", "30", Smod2.Config.SettingType.NUMERIC, true, "The seconds between requests (CHECK https://getipintel.net/#API)"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips", true, Smod2.Config.SettingType.BOOL, true, "Enables/Disables Risky IP Checker (Uses https://getipintel.net/)"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("trusted_ips_reset_every", 10, Smod2.Config.SettingType.NUMERIC, true, "The number of rounds until the cached IPs are cleared"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_ratelimit", 30, Smod2.Config.SettingType.NUMERIC, true, "The seconds between requests (CHECK https://getipintel.net/#API)"));
 			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_email", "", Smod2.Config.SettingType.STRING, true, "The email to use in requests to the api"));
 			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_subdomain", "check", Smod2.Config.SettingType.STRING, true, "The custom subdomain to use for https://getipintel.net/"));
-			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_at_percent", "95", Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to kick a player"));
-			this.AddConfig(new Smod2.Config.ConfigSetting("ban_risky_ips_at_percent", "100", Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to ban a player"));
-			this.AddConfig(new Smod2.Config.ConfigSetting("risky_ip_whitelist", "", Smod2.Config.SettingType.LIST, true, "A list of IPs to not check (Prevent them from being checked)"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_at_percent", 95, Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to kick a player"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("ban_risky_ips_at_percent", 100, Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to ban a player"));
+			this.AddConfig(new Smod2.Config.ConfigSetting("risky_ip_whitelist", new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of IPs to not check (Prevent them from being checked)"));
 		}
 	}
 
