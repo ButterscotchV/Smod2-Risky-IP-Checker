@@ -14,3 +14,8 @@ kick_risky_ips_subdomain | String | check | If you get a custom subdomain for ht
 kick_risky_ips_at_percent | Integer | 95 | The percentage of suspicion to kick a player
 ban_risky_ips_at_percent | Integer | 100 | The percentage of suspicion to ban a player
 risky_ip_whitelist | List | **Empty** | A list of IPs to not check (Prevent them from being kicked / banned)
+use_risky_country | Boolean | false | Enables/Disables Risky Country Checker
+only_use_risky_country | Boolean | false | If set to True, dangerous IP checker will be turned off
+use_white_list_contry | Boolean | false | A list of IPs to not check (Prevent them from being kicked / banned)
+risky_country_whitelist | List | **Empty** | A list of Country to whitelist, Use Country Code ISO 3166-1 alpha-2, Warning!  If you do not enter anything, no one can come in."
+risky_country_blacklist | List | **Empty** | A list of Country to blacklist, Use Country Code ISO 3166-1 alpha-2
