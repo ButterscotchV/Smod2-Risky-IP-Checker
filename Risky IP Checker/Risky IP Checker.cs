@@ -266,7 +266,7 @@ namespace RiskyIPCheckerPlugin
 				this.smIPTrust.Add(testAddress, percentSure);
 
 
-				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + testAddress +"\" Country: " + country +"\" SteamID: " + conn.SteamId);
+				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + testAddress +"\" Country: " + country +" SteamID: " + conn.SteamId);
 
 				this.RiskyIPAction(conn, percentSure, country, testAddress);
 			}
@@ -310,6 +310,11 @@ namespace RiskyIPCheckerPlugin
                 {
                     risky_country = true;
                     string[] whiteList = this.plugin.GetConfigList("risky_country_whitelist");
+                    if (whiteList.Length == 0)
+                    {
+                        plugin.Info("RiskyCountryCheck ignored because nothing is set in the whitelist");
+                        risky_country = false;
+                    }
                     foreach (string whitelistcountry in whiteList)
                     {
                         if (country == whitelistcountry)
@@ -323,17 +328,21 @@ namespace RiskyIPCheckerPlugin
                 {
                     risky_country = false;
                     string[] blackList = this.plugin.GetConfigList("risky_country_blacklist");
+                    if(blackList.Length == 0)
+                    {
+                        plugin.Info("RiskyCountryCheck ignored because nothing is set in the blacklist");
+                    }
                     foreach (string blacklistcountry in blackList)
                     {
                         if (country == blacklistcountry)
                         {
-                            risky_country = true; ;
+                            risky_country = true;
                         }
                     }
                 }
                 if (risky_country)
                 {
-                    this.plugin.Info("Banning player for having a risky Country (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + "\" SteamID: " + conn.SteamId);
+                    this.plugin.Info("Banning player for having a risky Country (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
                     conn.Ban(26297460);
                 }
             }
@@ -341,12 +350,12 @@ namespace RiskyIPCheckerPlugin
             {
                 if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("ban_risky_ips_at_percent"))
                 {
-                    this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + "\" SteamID: " + conn.SteamId);
+                    this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
                     conn.Ban(26297460);
                 }
                 else if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("kick_risky_ips_at_percent"))
                 {
-                    this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + "\" SteamID: " + conn.SteamId);
+                    this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
                 }
             }
 		}
