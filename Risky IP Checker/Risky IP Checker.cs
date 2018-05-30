@@ -15,7 +15,7 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.2",
+		version = "1.2 mod sk7z",
 		SmodMajor = 2,
 		SmodMinor = 1,
 		SmodRevision = 0
@@ -56,7 +56,13 @@ namespace RiskyIPCheckerPlugin
 			this.AddConfig(new Smod2.Config.ConfigSetting("kick_risky_ips_at_percent", 95, Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to kick a player"));
 			this.AddConfig(new Smod2.Config.ConfigSetting("ban_risky_ips_at_percent", 100, Smod2.Config.SettingType.NUMERIC, true, "The percentage of suspicion to ban a player"));
 			this.AddConfig(new Smod2.Config.ConfigSetting("risky_ip_whitelist", new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of IPs to not check (Prevent them from being checked)"));
-		}
+            this.AddConfig(new Smod2.Config.ConfigSetting("use_risky_country", false, Smod2.Config.SettingType.BOOL, true, ""));
+            this.AddConfig(new Smod2.Config.ConfigSetting("only_use_risky_country", false, Smod2.Config.SettingType.BOOL, true, ""));
+            this.AddConfig(new Smod2.Config.ConfigSetting("use_white_list_contry", false, Smod2.Config.SettingType.BOOL, true, "If false, blacklist will be applied"));
+            this.AddConfig(new Smod2.Config.ConfigSetting("risky_country_whitelist", new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of Country to whitelist, Use Country Code ISO 3166-1 alpha-2, If you do not enter anything, no one can come in."));
+            this.AddConfig(new Smod2.Config.ConfigSetting("risky_country_blacklist", new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of Country to blacklist, Use Country Code ISO 3166-1 alpha-2"));
+
+        }
 	}
 
 	class IPChecker : NetworkBehaviour
@@ -65,7 +71,8 @@ namespace RiskyIPCheckerPlugin
 
 		// IP Risk Checker
 		public Dictionary<string, System.Decimal> smIPTrust = new Dictionary<string, System.Decimal>();
-		public List<string> smIPQueue = new List<string>();
+        public Dictionary<string, string> smIPCountry = new Dictionary<string, string>();
+        public List<string> smIPQueue = new List<string>();
 		public int smUpdateIPTrustEvery; // Rounds
 		public int smCurUpdateCount; // Rounds
 		// end
@@ -81,7 +88,9 @@ namespace RiskyIPCheckerPlugin
 
 			// IP Risk Checker
 			this.smIPTrust = new Dictionary<string, System.Decimal>();
-			this.smIPQueue = new List<string>();
+            this.smIPCountry = new Dictionary<string, string>();
+
+            this.smIPQueue = new List<string>();
 			this.smUpdateIPTrustEvery = this.plugin.GetConfigInt("trusted_ips_reset_every"); // Rounds
 			this.smCurUpdateCount = smUpdateIPTrustEvery; // Rounds
 			// end
@@ -99,16 +108,18 @@ namespace RiskyIPCheckerPlugin
 			email = (email.Length > 0 ? "&contact=" + email : "");
 			string[] ipSplit = conn.IpAddress.Split(':');
 			string playerAddress = ipSplit[ipSplit.Length - 1].Trim();
+            
 
-			string expirationTime = System.DateTime.Now.AddSeconds(15).ToString(); // 15 seconds is long enough to get the ratelimit loop started if there's no issue
+
+            string expirationTime = System.DateTime.Now.AddSeconds(15).ToString(); // 15 seconds is long enough to get the ratelimit loop started if there's no issue
 			string ratelimitEntry = playerAddress + "|" + expirationTime;
 
 			if (playerAddress.ToLower().Equals(playerAddress.ToUpper()))
 			{
 				if (!playerAddress.Equals("127.0.0.1"))
 				{
-					if (!this.smIPTrust.ContainsKey(playerAddress) || !(this.smCurUpdateCount > 0 && this.smIPTrust.TryGetValue(playerAddress, out System.Decimal percentSure)))
-					{
+                    if (!this.smIPTrust.ContainsKey(playerAddress) || !(this.smCurUpdateCount > 0 && this.smIPTrust.TryGetValue(playerAddress, out System.Decimal percentSure) && this.smIPCountry.TryGetValue(playerAddress, out string country)))
+                    {
 						if (!this.RatelimitContains(playerAddress))
 						{
 							bool debugRatelimit = false; // Additional debug output for working on the ratelimiter, the regular debug output should be enough in most cases
@@ -167,9 +178,9 @@ namespace RiskyIPCheckerPlugin
 					}
 					else
 					{
-						this.plugin.Debug("Player IP already checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + playerAddress + "\" SteamID: " + conn.SteamId);
+						this.plugin.Debug("Player IP already checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + playerAddress + "\" Country: " + country + "\" SteamID: " + conn.SteamId);
 
-						this.RiskyIPAction(conn, percentSure, playerAddress);
+                        this.RiskyIPAction(conn, percentSure, country, playerAddress);
 					}
 				}
 				else
@@ -241,18 +252,23 @@ namespace RiskyIPCheckerPlugin
 		{
 			this.plugin.Debug("Checking player Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 
-			string webRequest = "http://" + this.plugin.GetConfigString("kick_risky_ips_subdomain") + ".getipintel.net/check.php?ip=" + testAddress + email + "&flags=f";
-			this.plugin.Debug("Contacting website with request: " + webRequest);
+			string webRequest = "http://" + this.plugin.GetConfigString("kick_risky_ips_subdomain") + ".getipintel.net/check.php?ip=" + testAddress + email + "&flags=f&oflags=c";
+            this.plugin.Debug("Contacting website with request: " + webRequest);
 			UnityWebRequest www = UnityWebRequest.Get(webRequest);
 			yield return www.SendWebRequest();
-			if (string.IsNullOrEmpty(www.error) && float.TryParse(www.downloadHandler.text, out float likelyBad))
+			if (string.IsNullOrEmpty(www.error) && float.TryParse(www.downloadHandler.text.Split(',')[0], out float likelyBad))
 			{
-				System.Decimal percentSure = System.Math.Round((System.Decimal)(likelyBad * 100f), 1, System.MidpointRounding.ToEven);
+
+                string country = www.downloadHandler.text.Split(',')[1];
+                this.smIPCountry.Add(testAddress, country);
+
+                System.Decimal percentSure = System.Math.Round((System.Decimal)(likelyBad * 100f), 1, System.MidpointRounding.ToEven);
 				this.smIPTrust.Add(testAddress, percentSure);
 
-				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
 
-				this.RiskyIPAction(conn, percentSure, testAddress);
+				this.plugin.Debug("Player IP checked Suspicion: " + percentSure + "% Nick: \"" + conn.Name + "\" IP: " + testAddress +"\" Country: " + country +" SteamID: " + conn.SteamId);
+
+				this.RiskyIPAction(conn, percentSure, country, testAddress);
 			}
 			else
 			{
@@ -284,18 +300,64 @@ namespace RiskyIPCheckerPlugin
 			}
 		}
 
-		public void RiskyIPAction(Player conn, System.Decimal percentSure, string testAddress)
+		public void RiskyIPAction(Player conn, System.Decimal percentSure,string country, string testAddress)
 		{
-			if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("ban_risky_ips_at_percent"))
-			{
-				this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
-				conn.Ban(26297460);
-			}
-			if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("kick_risky_ips_at_percent"))
-			{
-				this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" SteamID: " + conn.SteamId);
-				conn.Disconnect();
-			}
+
+            if (this.plugin.GetConfigBool("use_risky_country"))
+            {
+                bool risky_country;
+                if (this.plugin.GetConfigBool("use_white_list_contry"))
+                {
+                    risky_country = true;
+                    string[] whiteList = this.plugin.GetConfigList("risky_country_whitelist");
+                    if (whiteList.Length == 0)
+                    {
+                        plugin.Info("RiskyCountryCheck ignored because nothing is set in the whitelist");
+                        risky_country = false;
+                    }
+                    foreach (string whitelistcountry in whiteList)
+                    {
+                        if (country == whitelistcountry)
+                        {
+                            risky_country = false;
+                        }
+                    }
+
+                }
+                else
+                {
+                    risky_country = false;
+                    string[] blackList = this.plugin.GetConfigList("risky_country_blacklist");
+                    if(blackList.Length == 0)
+                    {
+                        plugin.Info("RiskyCountryCheck ignored because nothing is set in the blacklist");
+                    }
+                    foreach (string blacklistcountry in blackList)
+                    {
+                        if (country == blacklistcountry)
+                        {
+                            risky_country = true;
+                        }
+                    }
+                }
+                if (risky_country)
+                {
+                    this.plugin.Info("Banning player for having a risky Country (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
+                    conn.Ban(26297460);
+                }
+            }
+            if (this.plugin.GetConfigBool("only_use_risky_country") == false)
+            {
+                if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("ban_risky_ips_at_percent"))
+                {
+                    this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
+                    conn.Ban(26297460);
+                }
+                else if (percentSure >= (System.Decimal)this.plugin.GetConfigInt("kick_risky_ips_at_percent"))
+                {
+                    this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + "\" Country: " + country + " SteamID: " + conn.SteamId);
+                }
+            }
 		}
 		// ServerMod - IP Risk Checker end
 	}
