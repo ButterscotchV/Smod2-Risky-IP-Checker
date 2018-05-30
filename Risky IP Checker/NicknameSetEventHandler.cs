@@ -16,12 +16,12 @@ namespace Smod.Events
 		public void OnPlayerJoin(Player player)
 		{
 			// IP Risk Checker
-			if (plugin.GetConfigBool("kick_risky_ips"))
+			if (plugin.GetConfigBool(RiskyIPChecker.CONFIG_ENABLE_RISKY_CHECKER) || plugin.GetConfigBool(RiskyIPChecker.CONFIG_ENABLE_COUNTRY_RESTRICTIONS))
 			{
 				string[] userAddress = player.IpAddress.Split(':');
 				string endAddress = userAddress[userAddress.Length - 1].Trim();
 
-				foreach (string whitelistIP in plugin.GetConfigList("risky_ip_whitelist"))
+				foreach (string whitelistIP in plugin.GetConfigList(RiskyIPChecker.CONFIG_IP_WHITELIST))
 				{
 					string[] whitelistAddress = whitelistIP.Split(':');
 					string endWhitelistAddress = (whitelistAddress.Length >= 1 ? whitelistAddress[whitelistAddress.Length - 1] : whitelistIP).Trim();

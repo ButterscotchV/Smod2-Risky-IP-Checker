@@ -18,8 +18,9 @@ namespace Smod.Events
 			// IP Risk Checker
 			if (this.plugin.ipcheck.smCurUpdateCount <= 0)
 			{
-				this.plugin.ipcheck.smCurUpdateCount = this.plugin.ipcheck.smUpdateIPTrustEvery;
+				this.plugin.ipcheck.smCurUpdateCount = this.plugin.GetConfigInt(RiskyIPChecker.CONFIG_CLEAR_CACHE);
 				this.plugin.ipcheck.smIPTrust.Clear();
+				this.plugin.ipcheck.smIPCountry.Clear();
 			}
 			else
 			{
