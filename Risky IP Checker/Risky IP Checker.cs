@@ -3,6 +3,7 @@ using Smod2;
 using Smod2.API;
 using Smod2.Attributes;
 using Smod2.Events;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace RiskyIPCheckerPlugin
 		)]
 	class RiskyIPChecker : Plugin
 	{
+		public static readonly string MESSAGE_STAFF_CONTACT = Environment.NewLine + "Please contact the server staff if there are any issues.";
+
 		public static readonly string CONFIG_ENABLE_RISKY_CHECKER = "risky_ip_checker";
 		public static readonly string CONFIG_CLEAR_CACHE = "clear_ip_cache_after";
 		public static readonly string CONFIG_RATELIMIT = "risky_ips_ratelimit";
@@ -33,6 +36,8 @@ namespace RiskyIPCheckerPlugin
 		public static readonly string CONFIG_ENABLE_COUNTRY_RESTRICTIONS = "use_country_restrictions";
 		public static readonly string CONFIG_COUNTRY_WHITELIST = "country_whitelist";
 		public static readonly string CONFIG_COUNTRY_BLACKLIST = "country_blacklist";
+		public static readonly string CONFIG_BAN_COUNTRY_WHITELIST = "ban_country_whitelist";
+		public static readonly string CONFIG_BAN_COUNTRY_BLACKLIST = "ban_country_blacklist";
 
 		public IPChecker ipcheck;
 
@@ -71,6 +76,8 @@ namespace RiskyIPCheckerPlugin
 			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_ENABLE_COUNTRY_RESTRICTIONS, false, Smod2.Config.SettingType.BOOL, true, "Enables/Disables Country Restrictions (Uses https://getipintel.net/)"));
 			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_COUNTRY_WHITELIST, new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of countries to whitelist, use Country Code ISO 3166-1 alpha-2 (If this is set, only these countries can connect)"));
 			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_COUNTRY_BLACKLIST, new string[] { }, Smod2.Config.SettingType.LIST, true, "A list of countries to blacklist, use Country Code ISO 3166-1 alpha-2"));
+			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_BAN_COUNTRY_WHITELIST, false, Smod2.Config.SettingType.BOOL, true, "If true, this will ban any players in countries not on the whitelist, if false, it will just kick"));
+			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_BAN_COUNTRY_BLACKLIST, false, Smod2.Config.SettingType.BOOL, true, "If true, this will ban any players in countries on the blacklist, if false, it will just kick"));
 		}
 	}
 
@@ -329,12 +336,32 @@ namespace RiskyIPCheckerPlugin
 		{
 			if (this.plugin.GetConfigBool(RiskyIPChecker.CONFIG_ENABLE_COUNTRY_RESTRICTIONS))
 			{
-				if (!CountryWhitelisted(country) || CountryBlacklisted(country))
+				if (!CountryWhitelisted(country))
 				{
-					this.plugin.Info("Kicking player for being in a restricted country (" + country + ") Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
-					conn.Disconnect("Risky IP Checker: Sorry, you have been kicked for being in a restricted country specified by the server (Country Code ISO 3166-1 alpha-2: \"" + country + "\").");
-					conn.Ban(26297460); // TODO Make SMod2 allow ban messages
-
+					if (this.plugin.GetConfigBool(RiskyIPChecker.CONFIG_BAN_COUNTRY_WHITELIST))
+					{
+						this.plugin.Info("Banning player for being in a restricted country (" + country + ") Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
+						conn.Ban(26297460, "Risky IP Checker: You have been banned for being in a restricted country specified by the server (Country Code ISO 3166-1 alpha-2: \"" + country + "\")." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
+					}
+					else
+					{
+						this.plugin.Info("Kicking player for being in a restricted country (" + country + ") Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
+						conn.Disconnect("Risky IP Checker: You have been kicked for being in a restricted country specified by the server (Country Code ISO 3166-1 alpha-2: \"" + country + "\")." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
+					}
+					return;
+				}
+				else if (CountryBlacklisted(country))
+				{
+					if (this.plugin.GetConfigBool(RiskyIPChecker.CONFIG_BAN_COUNTRY_BLACKLIST))
+					{
+						this.plugin.Info("Banning player for being in a restricted country (" + country + ") Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
+						conn.Ban(26297460, "Risky IP Checker: You have been banned for being in a restricted country specified by the server (Country Code ISO 3166-1 alpha-2: \"" + country + "\")." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
+					}
+					else
+					{
+						this.plugin.Info("Kicking player for being in a restricted country (" + country + ") Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
+						conn.Disconnect("Risky IP Checker: You have been kicked for being in a restricted country specified by the server (Country Code ISO 3166-1 alpha-2: \"" + country + "\")." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
+					}
 					return;
 				}
 			}
@@ -344,18 +371,14 @@ namespace RiskyIPCheckerPlugin
 				if (percentSure >= (System.Decimal)this.plugin.GetConfigFloat(RiskyIPChecker.CONFIG_BAN_PERCENT))
 				{
 					this.plugin.Info("Banning player for having a known bad IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
-					conn.Disconnect("Risky IP Checker: Sorry, you have been banned because your IP is " + percentSure + "% suspicious. Please contact the server staff if there are any issues.");
-					conn.Ban(26297460); // TODO Make SMod2 allow ban messages
-
-					return;
+					conn.Ban(26297460, "Risky IP Checker: You have been banned because your IP is " + percentSure + "% suspicious." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
 				}
 				else if (percentSure >= (System.Decimal)this.plugin.GetConfigFloat(RiskyIPChecker.CONFIG_KICK_PERCENT))
 				{
 					this.plugin.Info("Kicking player for having a suspicious IP (" + percentSure + "%) Nick: \"" + conn.Name + "\" IP: " + testAddress + (string.IsNullOrEmpty(country) ? "" : " Country: " + country) + " SteamID: " + conn.SteamId);
-					conn.Disconnect("Risky IP Checker: Sorry, you have been kicked because your IP is " + percentSure + "% suspicious. Please contact the server staff if there are any issues.");
-
-					return;
+					conn.Disconnect("Risky IP Checker: You have been kicked because your IP is " + percentSure + "% suspicious." + RiskyIPChecker.MESSAGE_STAFF_CONTACT);
 				}
+				return;
 			}
 		}
 
@@ -370,7 +393,7 @@ namespace RiskyIPCheckerPlugin
 
 			foreach (string whitelistcountry in whitelist)
 			{
-				if (country.Equals(whitelistcountry))
+				if (country.Trim().Equals(whitelistcountry.Trim()))
 				{
 					return true;
 				}
@@ -390,7 +413,7 @@ namespace RiskyIPCheckerPlugin
 
 			foreach (string blacklistcountry in blacklist)
 			{
-				if (country.Equals(blacklistcountry))
+				if (country.Trim().Equals(blacklistcountry.Trim()))
 				{
 					return true;
 				}

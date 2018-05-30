@@ -17,3 +17,5 @@ no_check_ip_whitelist | List | **Empty** | A list of IPs to not check (Prevent t
 use_country_restrictions | Boolean | False | Enables/Disables Country Restrictions (Uses https://getipintel.net/)
 country_whitelist| List | **Empty** | A list of countries to whitelist, uses Country Code ISO 3166-1 alpha-2 (If this is set, only these countries can connect)
 country_blacklist | List | **Empty** | A list of countries to blacklist, uses Country Code ISO 3166-1 alpha-2
+ban_country_whitelist | Boolean | False | If true, this will ban any players in countries not on the whitelist, if false, it will just kick
+ban_country_blacklist | Boolean | False | If true, this will ban any players in countries on the blacklist, if false, it will just kick
