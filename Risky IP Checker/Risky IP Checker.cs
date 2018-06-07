@@ -2,6 +2,7 @@
 using Smod2;
 using Smod2.API;
 using Smod2.Attributes;
+using Smod2.EventHandlers;
 using Smod2.Events;
 using System;
 using System.Collections;
@@ -16,10 +17,10 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.3",
-		SmodMajor = 2,
-		SmodMinor = 2,
-		SmodRevision = 2
+		version = "1.4",
+		SmodMajor = 3,
+		SmodMinor = 0,
+		SmodRevision = 0
 		)]
 	class RiskyIPChecker : Plugin
 	{
@@ -61,8 +62,8 @@ namespace RiskyIPCheckerPlugin
 		public override void Register()
 		{
 			// Register Events
-			this.AddEventHandler(typeof(IEventPlayerJoin), new PlayerJoinHandler(this), Priority.Normal);
-			this.AddEventHandler(typeof(IEventRoundStart), new RoundStartHandler(this), Priority.Normal);
+			this.AddEventHandler(typeof(IEventHandlerPlayerJoin), new PlayerJoinHandler(this), Priority.Normal);
+			this.AddEventHandler(typeof(IEventHandlerRoundStart), new RoundStartHandler(this), Priority.Normal);
 
 			// Register config settings
 			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_ENABLE_RISKY_CHECKER, true, Smod2.Config.SettingType.BOOL, true, "Enables/Disables Risky IP Checker (Uses https://getipintel.net/)"));
@@ -124,7 +125,7 @@ namespace RiskyIPCheckerPlugin
 			string playerAddress = ipSplit[ipSplit.Length - 1].Trim();
 
 
-			string expirationTime = System.DateTime.Now.AddSeconds(15).ToString(); // 15 seconds is long enough to get the ratelimit loop started if there's no issue
+			string expirationTime = DateTime.Now.AddSeconds(15).ToString(); // 15 seconds is long enough to get the ratelimit loop started if there's no issue
 			string ratelimitEntry = playerAddress + "|" + expirationTime;
 
 			if (playerAddress.ToLower().Equals(playerAddress.ToUpper())) // Quick hack to check for non-numeric characters
@@ -215,7 +216,7 @@ namespace RiskyIPCheckerPlugin
 			string[] split = entry.Split(new char[] { '|' }, 2);
 			if (split.Length == 2)
 			{
-				return System.Convert.ToDateTime(split[1]) < System.DateTime.Now;
+				return Convert.ToDateTime(split[1]) < DateTime.Now;
 			}
 			else
 			{
@@ -250,7 +251,7 @@ namespace RiskyIPCheckerPlugin
 
 		public void UpdateRatelimitTime(string address, int timeoutSeconds)
 		{
-			string expirationTime = System.DateTime.Now.AddSeconds(timeoutSeconds).ToString();
+			string expirationTime = DateTime.Now.AddSeconds(timeoutSeconds).ToString();
 
 			for (int i = 0; i < this.smIPQueue.Count; i++)
 			{
@@ -288,7 +289,7 @@ namespace RiskyIPCheckerPlugin
 					this.smIPCountry.Add(testAddress, country);
 				}
 
-				System.Decimal percentSure = System.Math.Round((System.Decimal)(likelyBad * 100f), 1, System.MidpointRounding.ToEven);
+				System.Decimal percentSure = Math.Round((System.Decimal)(likelyBad * 100f), 1, MidpointRounding.ToEven);
 
 				if (this.smIPTrust.ContainsKey(testAddress))
 				{

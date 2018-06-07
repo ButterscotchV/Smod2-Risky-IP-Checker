@@ -1,10 +1,10 @@
 ﻿using RiskyIPCheckerPlugin;
-using Smod2.API;
+using Smod2.EventHandlers;
 using Smod2.Events;
 
 namespace Smod.Events
 {
-	class RoundStartHandler : IEventRoundStart
+	class RoundStartHandler : IEventHandlerRoundStart
 	{
 		private RiskyIPChecker plugin;
 
@@ -13,7 +13,7 @@ namespace Smod.Events
 			this.plugin = plugin;
 		}
 
-		public void OnRoundStart(Server server)
+		public void OnRoundStart(RoundStartEvent ev)
 		{
 			// IP Risk Checker
 			if (this.plugin.ipcheck.smCurUpdateCount <= 0)
