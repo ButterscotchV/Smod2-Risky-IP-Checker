@@ -3,6 +3,7 @@ using Smod2;
 using Smod2.API;
 using Smod2.Attributes;
 using Smod2.Events;
+using Smod2.EventHandlers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,10 +17,10 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.3",
-		SmodMajor = 2,
-		SmodMinor = 2,
-		SmodRevision = 2
+		version = "1.4",
+		SmodMajor = 3,
+		SmodMinor = 3,
+		SmodRevision = 3
 		)]
 	class RiskyIPChecker : Plugin
 	{
@@ -61,8 +62,8 @@ namespace RiskyIPCheckerPlugin
 		public override void Register()
 		{
 			// Register Events
-			this.AddEventHandler(typeof(IEventPlayerJoin), new PlayerJoinHandler(this), Priority.Normal);
-			this.AddEventHandler(typeof(IEventRoundStart), new RoundStartHandler(this), Priority.Normal);
+			this.AddEventHandler(typeof(IEventHandlerPlayerJoin), new PlayerJoinHandler(this), Priority.Normal);
+			this.AddEventHandler(typeof(IEventHandlerRoundStart), new RoundStartHandler(this), Priority.Normal);
 
 			// Register config settings
 			this.AddConfig(new Smod2.Config.ConfigSetting(CONFIG_ENABLE_RISKY_CHECKER, true, Smod2.Config.SettingType.BOOL, true, "Enables/Disables Risky IP Checker (Uses https://getipintel.net/)"));
