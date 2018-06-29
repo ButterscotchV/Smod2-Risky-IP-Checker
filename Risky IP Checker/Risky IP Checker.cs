@@ -17,9 +17,9 @@ namespace RiskyIPCheckerPlugin
 		name = "Risky IP Checker",
 		description = "An interface to check all player IPs through https://getipintel.net/",
 		id = "dankrushen.ip.checker",
-		version = "1.4",
+		version = "1.5",
 		SmodMajor = 3,
-		SmodMinor = 0,
+		SmodMinor = 1,
 		SmodRevision = 0
 		)]
 	class RiskyIPChecker : Plugin
@@ -273,7 +273,7 @@ namespace RiskyIPCheckerPlugin
 			this.plugin.Debug("Contacting website with request: " + webRequest);
 			UnityWebRequest www = UnityWebRequest.Get(webRequest);
 			yield return www.SendWebRequest();
-			if (string.IsNullOrEmpty(www.error) && float.TryParse(www.downloadHandler.text.Split(',')[0], out float likelyBad))
+			if (string.IsNullOrEmpty(www.error) && System.Decimal.TryParse(www.downloadHandler.text.Split(',')[0], out System.Decimal likelyBad))
 			{
 				string country = "";
 
@@ -289,7 +289,7 @@ namespace RiskyIPCheckerPlugin
 					this.smIPCountry.Add(testAddress, country);
 				}
 
-				System.Decimal percentSure = Math.Round((System.Decimal)(likelyBad * 100f), 1, MidpointRounding.ToEven);
+				System.Decimal percentSure = Math.Round(likelyBad * 100, 1, MidpointRounding.ToEven);
 
 				if (this.smIPTrust.ContainsKey(testAddress))
 				{
